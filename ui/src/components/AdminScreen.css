@@ -1,0 +1,696 @@
+.admin-screen {
+  flex: 1;
+  padding: 32px 0;
+  min-height: calc(100vh - 100px);
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  max-width: 1200px;
+  width: 1200px;
+  margin: 0 auto;
+}
+
+/* 관리자 대시보드 */
+.admin-dashboard {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.admin-dashboard h2 {
+  color: #1f2937;
+  margin-bottom: 24px;
+  font-size: 24px;
+  font-weight: 700;
+  text-align: center;
+  position: relative;
+}
+
+.admin-dashboard h2::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, #2563eb, #1d4ed8);
+  border-radius: 2px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.stat-item {
+  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(37, 99, 235, 0.15);
+}
+
+.stat-label {
+  display: block;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  display: block;
+  color: #2563eb;
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* 재고 현황 */
+.inventory-status {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.inventory-status h2 {
+  color: #1f2937;
+  margin-bottom: 24px;
+  font-size: 24px;
+  font-weight: 700;
+  text-align: center;
+  position: relative;
+}
+
+.inventory-status h2::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, #2563eb, #1d4ed8);
+  border-radius: 2px;
+}
+
+.inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.inventory-item {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 20px;
+  border: 2px solid #e2e8f0;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.inventory-item:hover {
+  border-color: #2563eb;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.1);
+}
+
+.item-info {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.item-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  text-align: center;
+  flex: 1;
+}
+
+.item-quantity {
+  font-size: 18px;
+  font-weight: 700;
+  color: #2563eb;
+  text-align: center;
+  margin-right: 8px;
+}
+
+.item-status {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.status-normal {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-out {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.quantity-controls {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.quantity-btn {
+  width: 36px;
+  height: 36px;
+  border: 2px solid #e2e8f0;
+  background: white;
+  color: #374151;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.quantity-btn:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.2);
+}
+
+.quantity-btn:active {
+  transform: translateY(0);
+}
+
+.quantity-btn.minus {
+  color: #dc2626;
+}
+
+.quantity-btn.minus:hover {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.quantity-btn.plus {
+  color: #374151;
+}
+
+.quantity-btn.plus:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+/* 주문 현황 */
+.order-status {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.order-status h2 {
+  color: #1f2937;
+  margin-bottom: 24px;
+  font-size: 24px;
+  font-weight: 700;
+  text-align: center;
+  position: relative;
+}
+
+.order-status h2::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, #2563eb, #1d4ed8);
+  border-radius: 2px;
+}
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.no-orders {
+  color: #6b7280;
+  text-align: center;
+  font-style: italic;
+  margin: 32px 0;
+  font-size: 16px;
+}
+
+.order-item {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 20px;
+  border: 2px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.order-item:hover {
+  border-color: #2563eb;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.1);
+}
+
+.order-info {
+  flex: 1;
+}
+
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.order-date {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.order-total {
+  font-size: 16px;
+  color: #2563eb;
+  font-weight: 700;
+}
+
+.order-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.order-item-name {
+  font-size: 14px;
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.order-actions {
+  margin-left: 20px;
+}
+
+.status-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  min-width: 100px;
+}
+
+.status-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.status-btn.status-received {
+  background: #2563eb;
+  color: white;
+}
+
+.status-btn.status-received:hover:not(:disabled) {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.status-btn.status-processing {
+  background: #f59e0b;
+  color: white;
+}
+
+.status-btn.status-processing:hover:not(:disabled) {
+  background: #d97706;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.status-btn.status-completed {
+  background: #10b981;
+  color: white;
+}
+
+.status-btn.status-completed:hover:not(:disabled) {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* 태블릿 반응형 */
+@media (max-width: 1024px) {
+  .admin-screen {
+    padding: 24px 0;
+    max-width: 900px;
+  }
+  
+  .admin-dashboard,
+  .inventory-status,
+  .order-status {
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  
+  .admin-dashboard h2,
+  .inventory-status h2,
+  .order-status h2 {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  
+  .stat-item {
+    padding: 16px;
+  }
+  
+  .stat-value {
+    font-size: 28px;
+  }
+  
+  .inventory-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  
+  .inventory-item {
+    padding: 16px;
+  }
+  
+  .item-name {
+    font-size: 14px;
+  }
+  
+  .item-quantity {
+    font-size: 16px;
+  }
+  
+  .quantity-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+  
+  .order-item {
+    padding: 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .order-actions {
+    margin-left: 0;
+    align-self: flex-end;
+  }
+  
+  .status-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+    min-width: 90px;
+  }
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+  .admin-screen {
+    padding: 20px 0;
+    max-width: 100%;
+  }
+  
+  .admin-dashboard,
+  .inventory-status,
+  .order-status {
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .admin-dashboard h2,
+  .inventory-status h2,
+  .order-status h2 {
+    font-size: 18px;
+    margin-bottom: 16px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .stat-item {
+    padding: 12px;
+  }
+  
+  .stat-label {
+    font-size: 12px;
+  }
+  
+  .stat-value {
+    font-size: 24px;
+  }
+  
+  .inventory-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .inventory-item {
+    padding: 12px;
+  }
+  
+  .item-info {
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  
+  .item-name {
+    font-size: 14px;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  
+  .item-quantity {
+    font-size: 16px;
+    margin-right: 0;
+    margin-bottom: 4px;
+  }
+  
+  .item-status {
+    font-size: 11px;
+    padding: 3px 6px;
+    align-self: center;
+  }
+  
+  .quantity-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+  
+  .order-item {
+    padding: 12px;
+  }
+  
+  .order-date {
+    font-size: 12px;
+  }
+  
+  .order-total {
+    font-size: 14px;
+  }
+  
+  .order-item-name {
+    font-size: 12px;
+  }
+  
+  .status-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    min-width: 80px;
+  }
+}
+
+/* 작은 모바일 */
+@media (max-width: 480px) {
+  .admin-screen {
+    padding: 16px 0;
+  }
+  
+  .admin-dashboard,
+  .inventory-status,
+  .order-status {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .admin-dashboard h2,
+  .inventory-status h2,
+  .order-status h2 {
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+  
+  .stat-item {
+    padding: 10px;
+  }
+  
+  .stat-label {
+    font-size: 11px;
+  }
+  
+  .stat-value {
+    font-size: 20px;
+  }
+  
+  .inventory-item {
+    padding: 10px;
+  }
+  
+  .item-info {
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  
+  .item-name {
+    font-size: 13px;
+    text-align: center;
+    margin-bottom: 3px;
+  }
+  
+  .item-quantity {
+    font-size: 15px;
+    margin-right: 0;
+    margin-bottom: 3px;
+  }
+  
+  .item-status {
+    font-size: 10px;
+    padding: 2px 4px;
+    align-self: center;
+  }
+  
+  .quantity-btn {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+  }
+  
+  .order-item {
+    padding: 10px;
+  }
+  
+  .order-date {
+    font-size: 11px;
+  }
+  
+  .order-total {
+    font-size: 13px;
+  }
+  
+  .order-item-name {
+    font-size: 11px;
+  }
+  
+  .status-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+    min-width: 70px;
+  }
+}
+
+/* 접근성 개선 */
+@media (prefers-reduced-motion: reduce) {
+  .admin-dashboard,
+  .inventory-status,
+  .order-status {
+    transition: none;
+  }
+  
+  .stat-item {
+    transition: none;
+  }
+  
+  .stat-item:hover {
+    transform: none;
+  }
+  
+  .inventory-item {
+    transition: none;
+  }
+  
+  .inventory-item:hover {
+    transform: none;
+  }
+  
+  .order-item {
+    transition: none;
+  }
+  
+  .order-item:hover {
+    transform: none;
+  }
+  
+  .quantity-btn {
+    transition: none;
+  }
+  
+  .quantity-btn:hover {
+    transform: none;
+  }
+  
+  .status-btn {
+    transition: none;
+  }
+  
+  .status-btn:hover {
+    transform: none;
+  }
+}
