@@ -1,15 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import "./ProductCard.css";
 
 const ProductCard = ({ product, onAddToCart }) => {
   const [selectedOptions, setSelectedOptions] = useState([]);
+  const [imageError, setImageError] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   const options = [
     { name: "샷 추가", price: 500 },
     { name: "시럽 추가", price: 0 }
   ];
 
-  const handleOptionChange = (optionName) => {
+  const handleOptionChange = useCallback((optionName) => {
     setSelectedOptions(prev => {
       if (prev.includes(optionName)) {
         return prev.filter(option => option !== optionName);
@@ -17,12 +19,32 @@ const ProductCard = ({ product, onAddToCart }) => {
         return [...prev, optionName];
       }
     });
-  };
+  }, []);
 
-  const handleAddToCart = () => {
-    onAddToCart(product, selectedOptions);
-    setSelectedOptions([]);
-  };
+  const handleAddToCart = useCallback(async () => {
+    if (isAddingToCart) return; // 중복 클릭 방지
+    
+    setIsAddingToCart(true);
+    
+    try {
+      onAddToCart(product, selectedOptions);
+      setSelectedOptions([]);
+      
+      // 성공 피드백
+      const btn = document.querySelector('.add-to-cart-btn');
+      if (btn) {
+        btn.textContent = '담기 완료!';
+        setTimeout(() => {
+          btn.textContent = '담기';
+        }, 1000);
+      }
+    } catch (error) {
+      console.error('장바구니 추가 실패:', error);
+      alert('장바구니 추가에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsAddingToCart(false);
+    }
+  }, [product, selectedOptions, onAddToCart, isAddingToCart]);
 
   const calculatePrice = () => {
     const optionsPrice = selectedOptions.reduce((sum, option) => {
@@ -32,10 +54,25 @@ const ProductCard = ({ product, onAddToCart }) => {
     return product.price + optionsPrice;
   };
 
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
   return (
     <div className="product-card">
       <div className="product-image">
-        <img src={product.image} alt={product.name} />
+        {imageError ? (
+          <div className="image-placeholder">
+            <span>이미지 없음</span>
+          </div>
+        ) : (
+          <img 
+            src={product.image} 
+            alt={product.name}
+            onError={handleImageError}
+            loading="lazy"
+          />
+        )}
       </div>
       
       <div className="product-info">
@@ -59,10 +96,11 @@ const ProductCard = ({ product, onAddToCart }) => {
         </div>
         
         <button 
-          className="add-to-cart-btn"
+          className={`add-to-cart-btn ${isAddingToCart ? 'loading' : ''}`}
           onClick={handleAddToCart}
+          disabled={isAddingToCart}
         >
-          담기
+          {isAddingToCart ? '담는 중...' : '담기'}
         </button>
       </div>
     </div>

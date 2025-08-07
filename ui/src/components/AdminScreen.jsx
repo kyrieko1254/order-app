@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import "./AdminScreen.css";
 
 const AdminScreen = () => {
@@ -20,23 +20,23 @@ const AdminScreen = () => {
     { id: 3, name: "카페라떼", quantity: 10 }
   ]);
 
-  // 주문 통계 계산
-  const orderStats = {
+  // 주문 통계 계산 - useMemo로 최적화
+  const orderStats = useMemo(() => ({
     total: orders.length,
     received: orders.filter(order => order.status === "received").length,
     processing: orders.filter(order => order.status === "processing").length,
     completed: orders.filter(order => order.status === "completed").length
-  };
+  }), [orders]);
 
   // 재고 상태 업데이트 함수
-  const getInventoryStatus = (quantity) => {
+  const getInventoryStatus = useCallback((quantity) => {
     if (quantity === 0) return "품절";
     if (quantity < 5) return "주의";
     return "정상";
-  };
+  }, []);
 
   // 재고 수량 변경 함수
-  const updateInventoryQuantity = (id, change) => {
+  const updateInventoryQuantity = useCallback((id, change) => {
     setInventory(prev => 
       prev.map(item => {
         if (item.id === id) {
@@ -49,10 +49,10 @@ const AdminScreen = () => {
         return item;
       })
     );
-  };
+  }, []);
 
   // 주문 상태 변경 함수
-  const updateOrderStatus = (orderId, newStatus) => {
+  const updateOrderStatus = useCallback((orderId, newStatus) => {
     setOrders(prev => 
       prev.map(order => 
         order.id === orderId 
@@ -60,10 +60,10 @@ const AdminScreen = () => {
           : order
       )
     );
-  };
+  }, []);
 
   // 주문 상태에 따른 버튼 텍스트
-  const getStatusButtonText = (status) => {
+  const getStatusButtonText = useCallback((status) => {
     switch (status) {
       case "received":
         return "제조 시작";
@@ -74,10 +74,10 @@ const AdminScreen = () => {
       default:
         return "주문 접수";
     }
-  };
+  }, []);
 
   // 주문 상태에 따른 다음 상태
-  const getNextStatus = (status) => {
+  const getNextStatus = useCallback((status) => {
     switch (status) {
       case "received":
         return "processing";
@@ -86,7 +86,43 @@ const AdminScreen = () => {
       default:
         return status;
     }
-  };
+  }, []);
+
+  // 주문 상태 변경 핸들러
+  const handleStatusChange = useCallback((orderId, currentStatus) => {
+    const nextStatus = getNextStatus(currentStatus);
+    updateOrderStatus(orderId, nextStatus);
+    
+    // 상태 변경 피드백
+    const statusMessages = {
+      processing: "제조를 시작합니다.",
+      completed: "제조가 완료되었습니다."
+    };
+    
+    if (statusMessages[nextStatus]) {
+      alert(statusMessages[nextStatus]);
+    }
+  }, [getNextStatus, updateOrderStatus]);
+
+  // 재고 수량 변경 핸들러
+  const handleInventoryChange = useCallback((id, change) => {
+    const item = inventory.find(item => item.id === id);
+    if (!item) return;
+
+    const newQuantity = item.quantity + change;
+    
+    if (newQuantity < 0) {
+      alert("재고 수량은 0보다 작을 수 없습니다.");
+      return;
+    }
+
+    updateInventoryQuantity(id, change);
+    
+    // 재고 부족 경고
+    if (newQuantity <= 5 && newQuantity > 0) {
+      alert(`${item.name}의 재고가 부족합니다. (${newQuantity}개 남음)`);
+    }
+  }, [inventory, updateInventoryQuantity]);
 
   return (
     <div className="admin-screen">
@@ -134,13 +170,15 @@ const AdminScreen = () => {
                   <div className="quantity-controls">
                     <button
                       className="quantity-btn minus"
-                      onClick={() => updateInventoryQuantity(item.id, -1)}
+                      onClick={() => handleInventoryChange(item.id, -1)}
+                      aria-label={`${item.name} 재고 감소`}
                     >
                       -
                     </button>
                     <button
                       className="quantity-btn plus"
-                      onClick={() => updateInventoryQuantity(item.id, 1)}
+                      onClick={() => handleInventoryChange(item.id, 1)}
+                      aria-label={`${item.name} 재고 증가`}
                     >
                       +
                     </button>
@@ -176,8 +214,9 @@ const AdminScreen = () => {
                   <div className="order-actions">
                     <button
                       className={`status-btn status-${order.status}`}
-                      onClick={() => updateOrderStatus(order.id, getNextStatus(order.status))}
+                      onClick={() => handleStatusChange(order.id, order.status)}
                       disabled={order.status === "completed"}
+                      aria-label={`주문 상태 변경: ${getStatusButtonText(order.status)}`}
                     >
                       {getStatusButtonText(order.status)}
                     </button>
