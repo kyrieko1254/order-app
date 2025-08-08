@@ -6,10 +6,8 @@ const ProductCard = ({ product, onAddToCart }) => {
   const [imageError, setImageError] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
 
-  const options = [
-    { name: "샷 추가", price: 500 },
-    { name: "시럽 추가", price: 0 }
-  ];
+  // API에서 가져온 옵션 데이터 사용
+  const options = product.options || [];
 
   const handleOptionChange = useCallback((optionName) => {
     setSelectedOptions(prev => {
@@ -47,8 +45,8 @@ const ProductCard = ({ product, onAddToCart }) => {
   }, [product, selectedOptions, onAddToCart, isAddingToCart]);
 
   const calculatePrice = () => {
-    const optionsPrice = selectedOptions.reduce((sum, option) => {
-      const optionData = options.find(opt => opt.name === option);
+    const optionsPrice = selectedOptions.reduce((sum, optionName) => {
+      const optionData = options.find(opt => opt.name === optionName);
       return sum + (optionData ? optionData.price : 0);
     }, 0);
     return product.price + optionsPrice;
@@ -58,8 +56,11 @@ const ProductCard = ({ product, onAddToCart }) => {
     setImageError(true);
   };
 
+  // 재고가 0인 경우 비활성화
+  const isOutOfStock = product.stock_quantity <= 0;
+
   return (
-    <div className="product-card">
+    <div className={`product-card ${isOutOfStock ? 'out-of-stock' : ''}`}>
       <div className="product-image">
         {imageError ? (
           <div className="image-placeholder">
@@ -67,7 +68,7 @@ const ProductCard = ({ product, onAddToCart }) => {
           </div>
         ) : (
           <img 
-            src={product.image} 
+            src={product.image_url || product.image} 
             alt={product.name}
             onError={handleImageError}
             loading="lazy"
@@ -80,13 +81,20 @@ const ProductCard = ({ product, onAddToCart }) => {
         <p className="product-price">{calculatePrice().toLocaleString()}원</p>
         <p className="product-description">{product.description}</p>
         
+        {isOutOfStock && (
+          <div className="out-of-stock-message">
+            재고 부족
+          </div>
+        )}
+        
         <div className="product-options">
           {options.map(option => (
-            <label key={option.name} className="option-item">
+            <label key={option.id} className="option-item">
               <input
                 type="checkbox"
                 checked={selectedOptions.includes(option.name)}
                 onChange={() => handleOptionChange(option.name)}
+                disabled={isOutOfStock}
               />
               <span className="option-text">
                 {option.name} {option.price > 0 ? `(+${option.price}원)` : "(+0원)"}
@@ -96,11 +104,11 @@ const ProductCard = ({ product, onAddToCart }) => {
         </div>
         
         <button 
-          className={`add-to-cart-btn ${isAddingToCart ? 'loading' : ''}`}
+          className={`add-to-cart-btn ${isAddingToCart ? 'loading' : ''} ${isOutOfStock ? 'disabled' : ''}`}
           onClick={handleAddToCart}
-          disabled={isAddingToCart}
+          disabled={isAddingToCart || isOutOfStock}
         >
-          {isAddingToCart ? '담는 중...' : '담기'}
+          {isOutOfStock ? '품절' : (isAddingToCart ? '담는 중...' : '담기')}
         </button>
       </div>
     </div>

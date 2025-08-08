@@ -10,7 +10,7 @@ router.get("/", async (req, res) => {
       SELECT 
         o.id,
         o.order_datetime,
-        o.total_amount,
+        o.total_amount::numeric as total_amount,
         o.status,
         json_agg(
           json_build_object(
@@ -69,7 +69,7 @@ router.get("/:id", async (req, res) => {
       SELECT 
         o.id,
         o.order_datetime,
-        o.total_amount,
+        o.total_amount::numeric as total_amount,
         o.status,
         json_agg(
           json_build_object(
@@ -189,10 +189,13 @@ router.post("/", async (req, res) => {
           menu_id,
           selected_options,
         ]);
-        optionPrice = optionResult.rows[0].total_option_price || 0;
+        optionPrice = Number(optionResult.rows[0].total_option_price) || 0;
       }
 
-      const unitPrice = menu.price + optionPrice;
+      // 명시적으로 숫자로 변환
+      const menuPrice = Number(menu.price);
+      const optionPriceNum = Number(optionPrice);
+      const unitPrice = menuPrice + optionPriceNum;
       const itemTotalPrice = unitPrice * quantity;
       totalAmount += itemTotalPrice;
 
@@ -212,7 +215,7 @@ router.post("/", async (req, res) => {
       RETURNING id
     `;
 
-    const orderResult = await client.query(orderQuery, [totalAmount]);
+    const orderResult = await client.query(orderQuery, [Number(totalAmount)]);
     const orderId = orderResult.rows[0].id;
 
     // 주문 상세 항목 생성

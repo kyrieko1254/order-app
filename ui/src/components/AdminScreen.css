@@ -3,9 +3,53 @@
   padding: 32px 0;
   min-height: calc(100vh - 100px);
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  max-width: 1200px;
-  width: 1200px;
+  max-width: 1000px;
+  width: 1000px;
   margin: 0 auto;
+}
+
+/* 로딩 상태 */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  font-size: 18px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.loading::before {
+  content: '';
+  width: 20px;
+  height: 20px;
+  border: 2px solid #e5e7eb;
+  border-top: 2px solid #2563eb;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 12px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 에러 상태 */
+.error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  font-size: 18px;
+  color: #dc2626;
+  font-weight: 500;
+  text-align: center;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  padding: 24px;
+  margin: 20px;
 }
 
 /* 관리자 대시보드 */
@@ -331,7 +375,7 @@
 }
 
 .status-btn {
-  padding: 10px 20px;
+  padding: 12px 24px;
   border: none;
   border-radius: 8px;
   font-size: 14px;
@@ -340,7 +384,12 @@
   transition: all 0.3s ease;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  min-width: 100px;
+  min-width: 120px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: inline-block;
+  text-align: center;
+  text-decoration: none;
+  line-height: 1.2;
 }
 
 .status-btn:disabled {
@@ -385,7 +434,8 @@
 @media (max-width: 1024px) {
   .admin-screen {
     padding: 24px 0;
-    max-width: 900px;
+    max-width: 100%;
+    width: 100%;
   }
   
   .admin-dashboard,
@@ -462,6 +512,7 @@
   .admin-screen {
     padding: 20px 0;
     max-width: 100%;
+    width: 100%;
   }
   
   .admin-dashboard,
@@ -561,6 +612,8 @@
 @media (max-width: 480px) {
   .admin-screen {
     padding: 16px 0;
+    max-width: 100%;
+    width: 100%;
   }
   
   .admin-dashboard,

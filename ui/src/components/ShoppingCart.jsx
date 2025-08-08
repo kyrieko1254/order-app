@@ -8,10 +8,10 @@ const ShoppingCart = ({ cart, onUpdateQuantity, onOrder, total }) => {
       return 0;
     }
 
-    const optionsPrice = item.options.reduce((sum, option) => {
-      if (option === "샷 추가") return sum + 500;
-      if (option === "시럽 추가") return sum + 0;
-      return sum;
+    const optionsPrice = item.options.reduce((sum, optionName) => {
+      // API에서 가져온 옵션 데이터에서 가격 찾기
+      const optionData = item.product.options?.find(opt => opt.name === optionName);
+      return sum + (optionData ? optionData.price : 0);
     }, 0);
     
     return (item.product.price + optionsPrice) * item.quantity;
@@ -94,7 +94,6 @@ const ShoppingCart = ({ cart, onUpdateQuantity, onOrder, total }) => {
                     <span className="item-name">{formatItemName(item)}</span>
                     <div className="item-details">
                       <span className="item-price">{calculateItemPrice(item).toLocaleString()}원</span>
-                      <span className="item-quantity-display">수량: {item.quantity}</span>
                     </div>
                   </div>
                   

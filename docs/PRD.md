@@ -250,3 +250,455 @@
 - 실시간 데이터 업데이트로 지연 없는 반응
 - 동시 다중 사용자 접근 지원
 - 안정적인 데이터 처리 및 저장
+
+## 5. 백엔드 개발 명세
+
+### 5.1 데이터 모델 설계
+
+#### 5.1.1 Menus 테이블
+
+**테이블 구조**
+
+```sql
+CREATE TABLE menus (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    price INTEGER NOT NULL,
+    image_url VARCHAR(255),
+    stock_quantity INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**필드 설명**
+
+- `id`: 메뉴 고유 식별자 (자동 증가)
+- `name`: 커피 이름 (예: "아메리카노(ICE)", "카페라떼")
+- `description`: 메뉴 설명
+- `price`: 메뉴 가격 (원 단위)
+- `image_url`: 메뉴 이미지 URL
+- `stock_quantity`: 재고 수량
+- `created_at`: 생성 일시
+- `updated_at`: 수정 일시
+
+#### 5.1.2 Options 테이블
+
+**테이블 구조**
+
+```sql
+CREATE TABLE options (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    price INTEGER DEFAULT 0,
+    menu_id INTEGER REFERENCES menus(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**필드 설명**
+
+- `id`: 옵션 고유 식별자 (자동 증가)
+- `name`: 옵션 이름 (예: "샷 추가", "시럽 추가")
+- `price`: 옵션 가격 (원 단위, 기본값 0)
+- `menu_id`: 연결된 메뉴 ID (외래키)
+- `created_at`: 생성 일시
+
+#### 5.1.3 Orders 테이블
+
+**테이블 구조**
+
+```sql
+CREATE TABLE orders (
+    id SERIAL PRIMARY KEY,
+    order_datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    total_amount INTEGER NOT NULL,
+    status VARCHAR(20) DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**필드 설명**
+
+- `id`: 주문 고유 식별자 (자동 증가)
+- `order_datetime`: 주문 일시
+- `total_amount`: 주문 총 금액
+- `status`: 주문 상태 ('pending', 'preparing', 'completed')
+- `created_at`: 생성 일시
+- `updated_at`: 수정 일시
+
+#### 5.1.4 OrderItems 테이블
+
+**테이블 구조**
+
+```sql
+CREATE TABLE order_items (
+    id SERIAL PRIMARY KEY,
+    order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
+    menu_id INTEGER REFERENCES menus(id),
+    quantity INTEGER NOT NULL,
+    unit_price INTEGER NOT NULL,
+    total_price INTEGER NOT NULL,
+    selected_options TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**필드 설명**
+
+- `id`: 주문 아이템 고유 식별자 (자동 증가)
+- `order_id`: 주문 ID (외래키)
+- `menu_id`: 메뉴 ID (외래키)
+- `quantity`: 주문 수량
+- `unit_price`: 단가 (옵션 포함)
+- `total_price`: 해당 아이템 총 가격 (unit_price × quantity)
+- `selected_options`: 선택된 옵션 정보 (JSON 형태)
+- `created_at`: 생성 일시
+
+### 5.2 사용자 흐름 및 데이터 처리
+
+#### 5.2.1 메뉴 조회 흐름
+
+**프로세스**
+
+1. 사용자가 주문 화면 접속
+2. 백엔드에서 Menus 테이블의 모든 메뉴 정보 조회
+3. 각 메뉴에 연결된 Options 정보도 함께 조회
+4. 재고 수량이 0인 메뉴는 비활성화 상태로 표시
+5. 관리자 화면에서는 재고 수량을 별도로 표시
+
+**API 엔드포인트**
+
+- `GET /api/menus`: 모든 메뉴 정보 조회 (옵션 포함)
+- `GET /api/menus/stock`: 재고 현황 조회 (관리자용)
+- `GET /api/menus/:id`: 특정 메뉴 상세 정보 조회
+
+#### 5.2.2 장바구니 처리 흐름
+
+**프로세스**
+
+1. 사용자가 메뉴 선택 및 옵션 선택
+2. 선택 정보를 프론트엔드에서 임시 저장
+3. 장바구니에 상품 추가 시 수량 관리
+4. 실시간 가격 계산 (메뉴 가격 + 옵션 가격) × 수량
+
+**데이터 구조**
+
+```javascript
+// 장바구니 아이템 구조
+{
+    menuId: 1,
+    menuName: "아메리카노(ICE)",
+    quantity: 2,
+    unitPrice: 4000,
+    selectedOptions: [
+        { name: "샷 추가", price: 500 },
+        { name: "시럽 추가", price: 0 }
+    ],
+    totalPrice: 9000 // (4000 + 500 + 0) × 2
+}
+```
+
+#### 5.2.3 주문 처리 흐름
+
+**프로세스**
+
+1. 사용자가 "주문하기" 버튼 클릭
+2. 장바구니 정보를 Orders 테이블에 저장
+3. 각 주문 아이템을 OrderItems 테이블에 저장
+4. 주문된 메뉴의 재고 수량 감소
+5. 주문 완료 후 장바구니 초기화
+
+**API 엔드포인트**
+
+- `POST /api/orders`: 새 주문 생성
+- `GET /api/orders`: 모든 주문 목록 조회 (상태별 필터링 가능)
+- `GET /api/orders/:id`: 특정 주문 정보 조회
+
+#### 5.2.4 관리자 주문 관리 흐름
+
+**프로세스**
+
+1. 관리자 화면에서 Orders 테이블의 주문 목록 조회
+2. 주문 상태별 필터링 및 통계 계산
+3. 주문 상태 변경 시 Orders 테이블 업데이트
+4. 실시간 주문 현황 업데이트
+
+**API 엔드포인트**
+
+- `GET /api/orders`: 모든 주문 목록 조회 (상태별 필터링 가능)
+- `PUT /api/orders/:id/status`: 주문 상태 변경
+- `GET /api/orders/statistics`: 주문 통계 조회
+
+### 5.3 API 설계
+
+#### 5.3.1 메뉴 관련 API
+
+**메뉴 목록 조회**
+
+```
+GET /api/menus
+Response: {
+    "success": true,
+    "data": {
+        "menus": [
+            {
+                "id": 1,
+                "name": "아메리카노(ICE)",
+                "description": "깔끔한 아메리카노",
+                "price": 4000,
+                "image_url": "/images/americano.jpg",
+                "stock_quantity": 10,
+                "options": [
+                    {
+                        "id": 1,
+                        "name": "샷 추가",
+                        "price": 500
+                    }
+                ]
+            }
+        ]
+    }
+}
+```
+
+**메뉴 상세 조회**
+
+```
+GET /api/menus/:id
+Response: {
+    "success": true,
+    "data": {
+        "id": 1,
+        "name": "아메리카노(ICE)",
+        "description": "깔끔한 아메리카노",
+        "price": 4000,
+        "image_url": "/images/americano.jpg",
+        "stock_quantity": 10,
+        "options": [...]
+    }
+}
+```
+
+#### 5.3.2 주문 관련 API
+
+**주문 생성**
+
+```
+POST /api/orders
+Request: {
+    "items": [
+        {
+            "menu_id": 1,
+            "quantity": 2,
+            "selected_options": ["샷 추가", "시럽 추가"]
+        }
+    ]
+}
+Response: {
+    "success": true,
+    "data": {
+        "order_id": 1,
+        "total_amount": 9000
+    },
+    "message": "주문이 성공적으로 처리되었습니다."
+}
+```
+
+**주문 목록 조회**
+
+```
+GET /api/orders
+GET /api/orders?status=pending
+Response: {
+    "success": true,
+    "data": {
+        "orders": [
+            {
+                "id": 1,
+                "order_datetime": "2024-01-15T10:30:00Z",
+                "total_amount": 9000,
+                "status": "pending",
+                "items": [
+                    {
+                        "menu_name": "아메리카노(ICE)",
+                        "quantity": 2,
+                        "unit_price": 4500,
+                        "total_price": 9000,
+                        "selected_options": ["샷 추가", "시럽 추가"]
+                    }
+                ]
+            }
+        ]
+    }
+}
+```
+
+**주문 상태 변경**
+
+```
+PUT /api/orders/:id/status
+Request: {
+    "status": "preparing"
+}
+Response: {
+    "success": true,
+    "data": {
+        "id": 1,
+        "status": "preparing",
+        "updated_at": "2024-01-15T10:35:00Z"
+    },
+    "message": "주문 상태가 성공적으로 변경되었습니다."
+}
+```
+
+**주문 통계 조회**
+
+```
+GET /api/orders/statistics
+Response: {
+    "success": true,
+    "data": {
+        "total_orders": 5,
+        "pending_orders": 2,
+        "processing_orders": 1,
+        "completed_orders": 2
+    }
+}
+```
+
+#### 5.3.3 재고 관리 API
+
+**재고 수량 조정**
+
+```
+PUT /api/menus/:id/stock
+Request: {
+    "stock_quantity": 15
+}
+Response: {
+    "success": true,
+    "data": {
+        "id": 1,
+        "stock_quantity": 15,
+        "updated_at": "2024-01-15T10:40:00Z"
+    },
+    "message": "재고 수량이 성공적으로 업데이트되었습니다."
+}
+```
+
+### 5.4 데이터베이스 연동 및 비즈니스 로직
+
+#### 5.4.1 재고 관리 로직
+
+**재고 감소 규칙**
+
+- 주문 생성 시 해당 메뉴의 재고 수량 자동 감소
+- 재고가 0인 메뉴는 주문 불가
+- 재고 부족 시 주문 거부 및 에러 메시지 반환
+
+**재고 증가 규칙**
+
+- 관리자가 재고 수량 조정 시 즉시 반영
+- 재고 수량은 0 이상으로 제한
+
+#### 5.4.2 주문 상태 관리 로직
+
+**상태 변경 규칙**
+
+- 새 주문: "pending" 상태로 자동 설정
+- pending → preparing → completed 순서로 진행
+- 완료된 주문은 별도 관리 또는 아카이브 처리
+
+#### 5.4.3 가격 계산 로직
+
+**가격 계산 공식**
+
+```
+메뉴 기본 가격 + 선택된 옵션 가격 = 단가
+단가 × 수량 = 해당 상품 총액
+모든 상품 총액의 합 = 주문 총액
+```
+
+**옵션 가격 처리**
+
+- 옵션 가격이 0인 경우에도 옵션 정보는 저장
+- 옵션 선택에 따른 실시간 가격 업데이트
+
+### 5.5 에러 처리 및 예외 상황
+
+#### 5.5.1 일반적인 에러 응답 형식
+
+```javascript
+{
+    "success": false,
+    "error": {
+        "code": "INVALID_REQUEST",
+        "message": "잘못된 요청입니다.",
+        "details": "필수 필드가 누락되었습니다."
+    }
+}
+```
+
+#### 5.5.2 주요 에러 상황
+
+- **재고 부족**: 주문 시 재고가 부족한 경우
+- **잘못된 주문 상태**: 허용되지 않은 상태 변경 시도 (pending, preparing, completed만 허용)
+- **존재하지 않는 메뉴**: 존재하지 않는 메뉴 ID로 주문 시도
+- **잘못된 수량**: 주문 수량이 1개 미만인 경우
+- **데이터베이스 연결 오류**: DB 연결 실패 시
+
+### 5.6 성능 및 보안 고려사항
+
+#### 5.6.1 성능 최적화
+
+- 데이터베이스 인덱스 설정 (주문 시간, 메뉴 ID 등)
+- API 응답 캐싱 (메뉴 정보 등 변경이 적은 데이터)
+- 페이지네이션 적용 (주문 목록 조회 시)
+
+#### 5.6.2 보안 고려사항
+
+- SQL 인젝션 방지를 위한 파라미터 바인딩
+- 입력 데이터 검증 및 sanitization
+- CORS 설정으로 허용된 도메인만 접근 가능
+
+### 5.7 개발 환경 설정
+
+#### 5.7.1 데이터베이스 초기화
+
+```sql
+-- 초기 메뉴 데이터 삽입
+INSERT INTO menus (name, description, price, stock_quantity) VALUES
+('아메리카노(ICE)', '깔끔한 아메리카노', 4000, 10),
+('아메리카노(HOT)', '따뜻한 아메리카노', 4000, 10),
+('카페라떼', '부드러운 카페라떼', 5000, 10);
+
+-- 초기 옵션 데이터 삽입
+INSERT INTO options (name, price, menu_id) VALUES
+('샷 추가', 500, 1),
+('시럽 추가', 0, 1),
+('샷 추가', 500, 2),
+('시럽 추가', 0, 2),
+('샷 추가', 500, 3),
+('시럽 추가', 0, 3);
+
+-- 주문 상태는 다음 중 하나로 설정:
+-- 'pending': 주문 접수
+-- 'preparing': 제조 중
+-- 'completed': 완료
+```
+
+#### 5.7.2 환경 변수 설정
+
+```env
+# .env 파일
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=coffee_order_db
+DB_USER=postgres
+DB_PASSWORD=your_password
+PORT=3001
+NODE_ENV=development
+```

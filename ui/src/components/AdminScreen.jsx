@@ -1,30 +1,55 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import "./AdminScreen.css";
+
+const API_BASE_URL = 'http://localhost:3001/api';
 
 const AdminScreen = () => {
   // 주문 상태 관리
-  const [orders, setOrders] = useState([
-    {
-      id: 1,
-      date: "7월 31일 13:00",
-      items: [{ name: "아메리카노(ICE)", quantity: 1, price: 4000 }],
-      total: 4000,
-      status: "received" // received, processing, completed
-    }
-  ]);
+  const [orders, setOrders] = useState([]);
+  const [inventory, setInventory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // 재고 상태 관리
-  const [inventory, setInventory] = useState([
-    { id: 1, name: "아메리카노 (ICE)", quantity: 10 },
-    { id: 2, name: "아메리카노 (HOT)", quantity: 10 },
-    { id: 3, name: "카페라떼", quantity: 10 }
-  ]);
+  // API에서 데이터 가져오기
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // 주문 데이터 가져오기
+        const ordersResponse = await fetch(`${API_BASE_URL}/orders`);
+        const ordersData = await ordersResponse.json();
+        
+        // 재고 데이터 가져오기
+        const inventoryResponse = await fetch(`${API_BASE_URL}/menus/stock`);
+        const inventoryData = await inventoryResponse.json();
+        
+        if (ordersData.success && inventoryData.success) {
+          setOrders(ordersData.data.orders || []);
+          setInventory(inventoryData.data.stock || []);
+        } else {
+          setError('데이터를 불러오는데 실패했습니다.');
+        }
+      } catch (error) {
+        console.error('데이터 로드 오류:', error);
+        setError('서버 연결에 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+    
+    // 30초마다 데이터 새로고침
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // 주문 통계 계산 - useMemo로 최적화
   const orderStats = useMemo(() => ({
     total: orders.length,
-    received: orders.filter(order => order.status === "received").length,
-    processing: orders.filter(order => order.status === "processing").length,
+    received: orders.filter(order => order.status === "pending").length,
+    processing: orders.filter(order => order.status === "preparing").length,
     completed: orders.filter(order => order.status === "completed").length
   }), [orders]);
 
@@ -36,38 +61,91 @@ const AdminScreen = () => {
   }, []);
 
   // 재고 수량 변경 함수
-  const updateInventoryQuantity = useCallback((id, change) => {
-    setInventory(prev => 
-      prev.map(item => {
-        if (item.id === id) {
-          const newQuantity = Math.max(0, item.quantity + change);
-          return {
-            ...item,
-            quantity: newQuantity
-          };
+  const updateInventoryQuantity = useCallback(async (id, change) => {
+    try {
+      const item = inventory.find(item => item.id === id);
+      if (!item) return;
+
+      const newQuantity = Math.max(0, item.stock_quantity + change);
+      
+      const response = await fetch(`${API_BASE_URL}/menus/${id}/stock`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ stock_quantity: newQuantity })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setInventory(prev => 
+          prev.map(item => 
+            item.id === id 
+              ? { ...item, stock_quantity: newQuantity }
+              : item
+          )
+        );
+        
+        // 재고 부족 경고
+        if (newQuantity <= 5 && newQuantity > 0) {
+          alert(`${item.name}의 재고가 부족합니다. (${newQuantity}개 남음)`);
         }
-        return item;
-      })
-    );
-  }, []);
+      } else {
+        alert(`재고 업데이트 실패: ${data.message}`);
+      }
+    } catch (error) {
+      console.error('재고 업데이트 오류:', error);
+      alert('재고 업데이트 중 오류가 발생했습니다.');
+    }
+  }, [inventory]);
 
   // 주문 상태 변경 함수
-  const updateOrderStatus = useCallback((orderId, newStatus) => {
-    setOrders(prev => 
-      prev.map(order => 
-        order.id === orderId 
-          ? { ...order, status: newStatus }
-          : order
-      )
-    );
+  const updateOrderStatus = useCallback(async (orderId, newStatus) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/orders/${orderId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setOrders(prev => 
+          prev.map(order => 
+            order.id === orderId 
+              ? { ...order, status: newStatus }
+              : order
+          )
+        );
+        
+        // 상태 변경 피드백
+        const statusMessages = {
+          preparing: "제조를 시작합니다.",
+          completed: "제조가 완료되었습니다."
+        };
+        
+        if (statusMessages[newStatus]) {
+          alert(statusMessages[newStatus]);
+        }
+      } else {
+        alert(`주문 상태 변경 실패: ${data.message}`);
+      }
+    } catch (error) {
+      console.error('주문 상태 변경 오류:', error);
+      alert('주문 상태 변경 중 오류가 발생했습니다.');
+    }
   }, []);
 
   // 주문 상태에 따른 버튼 텍스트
   const getStatusButtonText = useCallback((status) => {
     switch (status) {
-      case "received":
+      case "pending":
         return "제조 시작";
-      case "processing":
+      case "preparing":
         return "제조 완료";
       case "completed":
         return "완료";
@@ -79,9 +157,9 @@ const AdminScreen = () => {
   // 주문 상태에 따른 다음 상태
   const getNextStatus = useCallback((status) => {
     switch (status) {
-      case "received":
-        return "processing";
-      case "processing":
+      case "pending":
+        return "preparing";
+      case "preparing":
         return "completed";
       default:
         return status;
@@ -92,16 +170,6 @@ const AdminScreen = () => {
   const handleStatusChange = useCallback((orderId, currentStatus) => {
     const nextStatus = getNextStatus(currentStatus);
     updateOrderStatus(orderId, nextStatus);
-    
-    // 상태 변경 피드백
-    const statusMessages = {
-      processing: "제조를 시작합니다.",
-      completed: "제조가 완료되었습니다."
-    };
-    
-    if (statusMessages[nextStatus]) {
-      alert(statusMessages[nextStatus]);
-    }
   }, [getNextStatus, updateOrderStatus]);
 
   // 재고 수량 변경 핸들러
@@ -109,7 +177,7 @@ const AdminScreen = () => {
     const item = inventory.find(item => item.id === id);
     if (!item) return;
 
-    const newQuantity = item.quantity + change;
+    const newQuantity = item.stock_quantity + change;
     
     if (newQuantity < 0) {
       alert("재고 수량은 0보다 작을 수 없습니다.");
@@ -117,12 +185,27 @@ const AdminScreen = () => {
     }
 
     updateInventoryQuantity(id, change);
-    
-    // 재고 부족 경고
-    if (newQuantity <= 5 && newQuantity > 0) {
-      alert(`${item.name}의 재고가 부족합니다. (${newQuantity}개 남음)`);
-    }
   }, [inventory, updateInventoryQuantity]);
+
+  if (loading) {
+    return (
+      <div className="admin-screen">
+        <div className="container">
+          <div className="loading">데이터를 불러오는 중...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="admin-screen">
+        <div className="container">
+          <div className="error">{error}</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-screen">
@@ -155,14 +238,14 @@ const AdminScreen = () => {
           <h2>재고 현황</h2>
           <div className="inventory-grid">
             {inventory.map(item => {
-              const status = getInventoryStatus(item.quantity);
+              const status = getInventoryStatus(item.stock_quantity);
               const statusClass = status === "정상" ? "normal" : status === "주의" ? "warning" : "out";
               
               return (
                 <div key={item.id} className="inventory-item">
                   <div className="item-info">
                     <span className="item-name">{item.name}</span>
-                    <span className="item-quantity">{item.quantity}개</span>
+                    <span className="item-quantity">{item.stock_quantity}개</span>
                     <span className={`item-status status-${statusClass}`}>
                       {status}
                     </span>
@@ -171,6 +254,7 @@ const AdminScreen = () => {
                     <button
                       className="quantity-btn minus"
                       onClick={() => handleInventoryChange(item.id, -1)}
+                      disabled={item.stock_quantity <= 0}
                       aria-label={`${item.name} 재고 감소`}
                     >
                       -
@@ -200,13 +284,15 @@ const AdminScreen = () => {
                 <div key={order.id} className="order-item">
                   <div className="order-info">
                     <div className="order-header">
-                      <span className="order-date">{order.date}</span>
-                      <span className="order-total">{order.total.toLocaleString()}원</span>
+                      <span className="order-date">
+                        {new Date(order.order_datetime).toLocaleString('ko-KR')}
+                      </span>
+                      <span className="order-total">{Number(order.total_amount).toLocaleString()}원</span>
                     </div>
                     <div className="order-items">
-                      {order.items.map((item, index) => (
+                      {order.items && order.items.map((item, index) => (
                         <span key={index} className="order-item-name">
-                          {item.name} x {item.quantity}
+                          {item.menu_name} x {item.quantity}
                         </span>
                       ))}
                     </div>
