@@ -1,0 +1,103 @@
+# 환경 변수 파일
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# 로그 파일
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# 런타임 데이터
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# 커버리지 디렉토리
+coverage/
+*.lcov
+
+# nyc 테스트 커버리지
+.nyc_output
+
+# Grunt 중간 저장소
+.grunt
+
+# Bower 의존성 디렉토리
+bower_components
+
+# node-waf 설정
+.lock-wscript
+
+# 컴파일된 바이너리 애드온
+build/Release
+
+# 의존성 디렉토리
+node_modules/
+jspm_packages/
+
+# TypeScript v1 선언 파일
+typings/
+
+# TypeScript 캐시
+*.tsbuildinfo
+
+# 선택적 npm 캐시 디렉토리
+.npm
+
+# 선택적 eslint 캐시
+.eslintcache
+
+# 마이크로 번들러의 기본 출력 파일
+.next/
+out/
+
+# Nuxt.js 빌드 / 생성 출력
+.nuxt
+dist
+
+# Gatsby 파일
+.cache/
+public
+
+# Storybook 빌드 출력
+.out
+.storybook-out
+
+# 임시 폴더
+tmp/
+temp/
+
+# 에디터 디렉토리 및 파일
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS 생성 파일
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 테스트 파일들
+test-connection.js
+create-schema.js
+drop-schema.js
+
+# 데이터베이스 백업 파일
+*.sql
+*.dump
+
+# 설정 파일 (민감한 정보 포함)
+config.env
