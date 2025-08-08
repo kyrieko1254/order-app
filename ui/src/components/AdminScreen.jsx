@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import "./AdminScreen.css";
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
 const AdminScreen = () => {
   // 주문 상태 관리

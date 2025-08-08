@@ -3,7 +3,7 @@ import "./OrderScreen.css";
 import ProductCard from "./ProductCard";
 import ShoppingCart from "./ShoppingCart";
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
 const CART_STORAGE_KEY = 'cozy-cart';
 
