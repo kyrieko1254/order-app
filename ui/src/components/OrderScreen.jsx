@@ -27,17 +27,27 @@ const OrderScreen = () => {
     const fetchMenus = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${getApiUrl(API_ENDPOINTS.MENUS)}`);
+        setError(null);
+        
+        const apiUrl = getApiUrl(API_ENDPOINTS.MENUS);
+        console.log('API 호출 URL:', apiUrl);
+        
+        const response = await fetch(apiUrl);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
         
         if (data.success) {
           setProducts(data.data.menus);
         } else {
-          setError('메뉴 데이터를 불러오는데 실패했습니다.');
+          setError(`메뉴 데이터를 불러오는데 실패했습니다: ${data.message}`);
         }
       } catch (error) {
         console.error('메뉴 데이터 로드 오류:', error);
-        setError('서버 연결에 실패했습니다.');
+        setError(`서버 연결에 실패했습니다: ${error.message}`);
       } finally {
         setLoading(false);
       }

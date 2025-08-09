@@ -5,8 +5,21 @@ require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// CORS 설정
+const corsOptions = {
+  origin: [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "https://coffee-order-frontend.onrender.com",
+    "https://your-frontend-app-name.onrender.com", // 실제 프론트엔드 도메인으로 변경
+    /\.onrender\.com$/, // Render.com 도메인 모두 허용
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
+
 // 미들웨어 설정
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -21,10 +34,17 @@ app.use("/api/orders", require("./routes/orders"));
 
 // 에러 핸들링 미들웨어
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error("=== 서버 오류 발생 ===");
+  console.error("요청 URL:", req.url);
+  console.error("요청 메서드:", req.method);
+  console.error("요청 헤더:", req.headers);
+  console.error("오류 스택:", err.stack);
+  console.error("=====================");
+
   res.status(500).json({
     success: false,
     message: "서버 내부 오류가 발생했습니다.",
+    error: process.env.NODE_ENV === "development" ? err.message : undefined,
   });
 });
 

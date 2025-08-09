@@ -6,6 +6,13 @@ export const API_BASE_URL =
 export const isProduction = import.meta.env.PROD;
 export const isDevelopment = import.meta.env.DEV;
 
+// 디버깅 정보
+console.log("=== API 설정 정보 ===");
+console.log("API_BASE_URL:", API_BASE_URL);
+console.log("isProduction:", isProduction);
+console.log("isDevelopment:", isDevelopment);
+console.log("=====================");
+
 // API 엔드포인트
 export const API_ENDPOINTS = {
   MENUS: "/menus",
@@ -16,5 +23,7 @@ export const API_ENDPOINTS = {
 
 // API URL 생성 함수
 export const getApiUrl = (endpoint) => {
-  return `${API_BASE_URL}${endpoint}`;
+  const fullUrl = `${API_BASE_URL}${endpoint}`;
+  console.log("생성된 API URL:", fullUrl);
+  return fullUrl;
 };

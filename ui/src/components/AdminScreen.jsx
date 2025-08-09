@@ -14,24 +14,37 @@ const AdminScreen = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        setError(null);
         
         // 주문 데이터 가져오기
-        const ordersResponse = await fetch(`${getApiUrl(API_ENDPOINTS.ORDERS)}`);
+        const ordersUrl = getApiUrl(API_ENDPOINTS.ORDERS);
+        console.log('주문 API 호출 URL:', ordersUrl);
+        
+        const ordersResponse = await fetch(ordersUrl);
+        if (!ordersResponse.ok) {
+          throw new Error(`주문 데이터 로드 실패: ${ordersResponse.status}`);
+        }
         const ordersData = await ordersResponse.json();
         
         // 재고 데이터 가져오기
-        const inventoryResponse = await fetch(`${getApiUrl(API_ENDPOINTS.STOCK)}`);
+        const stockUrl = getApiUrl(API_ENDPOINTS.STOCK);
+        console.log('재고 API 호출 URL:', stockUrl);
+        
+        const inventoryResponse = await fetch(stockUrl);
+        if (!inventoryResponse.ok) {
+          throw new Error(`재고 데이터 로드 실패: ${inventoryResponse.status}`);
+        }
         const inventoryData = await inventoryResponse.json();
         
         if (ordersData.success && inventoryData.success) {
           setOrders(ordersData.data.orders || []);
           setInventory(inventoryData.data.stock || []);
         } else {
-          setError('데이터를 불러오는데 실패했습니다.');
+          setError(`데이터를 불러오는데 실패했습니다: ${ordersData.message || inventoryData.message}`);
         }
       } catch (error) {
         console.error('데이터 로드 오류:', error);
-        setError('서버 연결에 실패했습니다.');
+        setError(`서버 연결에 실패했습니다: ${error.message}`);
       } finally {
         setLoading(false);
       }
