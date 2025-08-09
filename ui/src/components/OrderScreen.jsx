@@ -2,8 +2,7 @@ import React, { useState, useCallback, useMemo, useEffect } from "react";
 import "./OrderScreen.css";
 import ProductCard from "./ProductCard";
 import ShoppingCart from "./ShoppingCart";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+import { getApiUrl, API_ENDPOINTS } from "../config/api";
 
 const CART_STORAGE_KEY = 'cozy-cart';
 
@@ -28,7 +27,7 @@ const OrderScreen = () => {
     const fetchMenus = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${API_BASE_URL}/menus`);
+        const response = await fetch(`${getApiUrl(API_ENDPOINTS.MENUS)}`);
         const data = await response.json();
         
         if (data.success) {
@@ -120,7 +119,7 @@ const OrderScreen = () => {
       }));
 
       // API로 주문 전송
-      const response = await fetch(`${API_BASE_URL}/orders`, {
+      const response = await fetch(`${getApiUrl(API_ENDPOINTS.ORDERS)}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

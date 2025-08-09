@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import "./AdminScreen.css";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+import { getApiUrl, API_ENDPOINTS } from "../config/api";
 
 const AdminScreen = () => {
   // 주문 상태 관리
@@ -17,11 +16,11 @@ const AdminScreen = () => {
         setLoading(true);
         
         // 주문 데이터 가져오기
-        const ordersResponse = await fetch(`${API_BASE_URL}/orders`);
+        const ordersResponse = await fetch(`${getApiUrl(API_ENDPOINTS.ORDERS)}`);
         const ordersData = await ordersResponse.json();
         
         // 재고 데이터 가져오기
-        const inventoryResponse = await fetch(`${API_BASE_URL}/menus/stock`);
+        const inventoryResponse = await fetch(`${getApiUrl(API_ENDPOINTS.STOCK)}`);
         const inventoryData = await inventoryResponse.json();
         
         if (ordersData.success && inventoryData.success) {
@@ -68,7 +67,7 @@ const AdminScreen = () => {
 
       const newQuantity = Math.max(0, item.stock_quantity + change);
       
-      const response = await fetch(`${API_BASE_URL}/menus/${id}/stock`, {
+      const response = await fetch(`${getApiUrl(API_ENDPOINTS.MENUS)}/${id}/stock`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -103,7 +102,7 @@ const AdminScreen = () => {
   // 주문 상태 변경 함수
   const updateOrderStatus = useCallback(async (orderId, newStatus) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/orders/${orderId}/status`, {
+      const response = await fetch(`${getApiUrl(API_ENDPOINTS.ORDERS)}/${orderId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
